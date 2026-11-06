@@ -1,25 +1,50 @@
 {% extends "base.html" %}
-{% block title %}Catálogo · TechGear{% endblock %}
+{% block title %}Catálogo · TechGear Beauty{% endblock %}
 {% block content %}
-<h1>Catálogo de productos</h1>
-<form method="get" style="margin-bottom:16px">
-  <input name="categoria" value="{{ categoria }}" placeholder="Filtrar por categoría">
-  <button type="submit" style="margin-top:0">Filtrar</button>
-</form>
-<div class="grid">
+<header class="header-mark">
+  <div>
+    <h1 id="catalogo-titulo">Beauty essentials</h1>
+    <p>Descubre maquillaje, cuidado y productos que realzan tu look con brillo y elegancia.</p>
+  </div>
+  <span class="mini-badge" aria-label="Colección disponible">Colección rosa</span>
+</header>
+<div class="toolbar">
+  <form method="get" aria-label="Filtrar productos por categoría">
+    <label for="categoria-filtro" class="sr-only">Filtrar por categoría</label>
+    <input id="categoria-filtro" name="categoria" value="{{ categoria }}" placeholder="Filtrar por categoría" aria-label="Filtrar por categoría">
+    <button type="submit">Filtrar</button>
+  </form>
+  {% if request.session.usuario and request.session.usuario.rol == "administrador" %}
+    <a class="btn" href="{% url 'producto_nuevo' %}">Nuevo producto</a>
+  {% endif %}
+</div>
+<section class="grid" aria-labelledby="catalogo-titulo">
   {% for p in productos %}
   <article class="card">
-    {% if p.imagen_url %}<img src="{{ p.imagen_url }}" alt="{{ p.nombre }}">{% else %}<div class="noimg"></div>{% endif %}
-    <div>
+    {% with imagen_default='https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=900&q=80' %}
+      <img src="{{ p.imagen_url|default:imagen_default }}" alt="{{ p.nombre }}" width="800" height="520" loading="lazy" decoding="async" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=900&q=80';">
+    {% endwith %}
+    <div class="info">
       <span class="tag">{{ p.categoria }}</span>
       <h3>{{ p.nombre }}</h3>
       <p>{{ p.descripcion }}</p>
       <p class="precio">${{ p.precio|floatformat:"0g" }}</p>
       <small>{% if p.stock > 0 %}{{ p.stock }} disponibles{% else %}Agotado{% endif %}</small>
+      <div class="card-actions">
+        {% if request.session.usuario %}
+          <a class="btn" href="{% url 'agregar_pedido' p.id %}">Agregar pedido</a>
+        {% else %}
+          <a class="btn" href="{% url 'login' %}">Inicia sesión</a>
+        {% endif %}
+        {% if request.session.usuario and request.session.usuario.rol == "administrador" %}
+          <a class="btn secondary" href="{% url 'producto_editar' p.id %}">Editar</a>
+          <a class="btn danger" href="{% url 'producto_eliminar' p.id %}" onclick="return confirm('¿Eliminar este producto?')">Eliminar</a>
+        {% endif %}
+      </div>
     </div>
   </article>
   {% empty %}
   <p>No hay productos para mostrar.</p>
   {% endfor %}
-</div>
+</section>
 {% endblock %}
